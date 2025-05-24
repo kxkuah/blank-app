@@ -181,8 +181,6 @@ if st.button("Run Optimization"):
             ax.legend()
             st.pyplot(fig)
 
-            final_weights = result_final.x
-            combined_vector = X_final @ final_weights
 
             st.success("Constrained optimization successful!")
             st.subheader(f"Final Alloy Composition for {target_alloy}")
