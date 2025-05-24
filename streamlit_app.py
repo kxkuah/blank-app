@@ -146,34 +146,7 @@ if st.button("Run Optimization"):
         result_final = minimize(loss_final, x0_final, bounds=bounds_final, constraints=constraints_final)
 
         if result_final.success:
-            final_weights = result_final.x
-            combined_vector = X_final @ final_weights
 
-            st.success("Constrained optimization successful!")
-            st.subheader(f"Final Alloy Composition for {target_alloy}")
-            for a, w in zip(final_alloys, final_weights):
-                st.write(f"**{a}**: {w:.4f}")
-            st.subheader("📊 Detailed Parameter Composition")
-
-            detailed_lines = []
-
-            for i, param in enumerate(parameter_names):
-                parts = []
-                total = 0.0
-
-                for alloy, weight in zip(final_alloys, final_weights):
-                    value = df.loc[alloy, param]
-                    contrib = weight * value
-                    parts.append(f"{weight:.4f} × {value:.2f} = {contrib:.2f}")
-                    total += contrib
-
-                breakdown = " + ".join(parts)
-                line = f"**{param}**: {breakdown} = **{total:.2f}**"
-                detailed_lines.append(line)
-
-            # Display the full breakdown
-            for line in detailed_lines:
-                st.markdown(line)
 
             # Plotting (same as before)
             actual = target_vector
@@ -207,5 +180,34 @@ if st.button("Run Optimization"):
             ax.set_title(f'Actual vs Constrained Calculated for {target_alloy} using {", ".join(final_alloys)}')
             ax.legend()
             st.pyplot(fig)
+
+            final_weights = result_final.x
+            combined_vector = X_final @ final_weights
+
+            st.success("Constrained optimization successful!")
+            st.subheader(f"Final Alloy Composition for {target_alloy}")
+            for a, w in zip(final_alloys, final_weights):
+                st.write(f"**{a}**: {w:.4f}")
+            st.subheader("📊 Detailed Parameter Composition")
+
+            detailed_lines = []
+
+            for i, param in enumerate(parameter_names):
+                parts = []
+                total = 0.0
+
+                for alloy, weight in zip(final_alloys, final_weights):
+                    value = df.loc[alloy, param]
+                    contrib = weight * value
+                    parts.append(f"{weight:.4f} × {value:.2f} = {contrib:.2f}")
+                    total += contrib
+
+                breakdown = " + ".join(parts)
+                line = f"**{param}**: {breakdown} = **{total:.2f}**"
+                detailed_lines.append(line)
+
+            # Display the full breakdown
+            for line in detailed_lines:
+                st.markdown(line)
         else:
             st.error("Final optimization with element constraints failed.")
