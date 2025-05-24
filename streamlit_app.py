@@ -146,8 +146,8 @@ if st.button("Run Optimization"):
         result_final = minimize(loss_final, x0_final, bounds=bounds_final, constraints=constraints_final)
 
         if result_final.success:
-
-
+            final_weights = result_final.x
+            combined_vector = X_final @ final_weights
             # Plotting (same as before)
             actual = target_vector
             calculated = combined_vector
