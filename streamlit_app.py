@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # Must be the first Streamlit command
-st.set_page_config(page_title='Alloy Calculator', page_icon=':wrench:')
-st.title("🔧 Alloy Calculator")
+st.set_page_config(page_title='Alloy Mixing Calculator', page_icon=':wrench:')
+st.title("🔧 Alloy Mixing Calculator")
 
 # Load your data (replace this with actual data loading)
 @st.cache_data
@@ -73,7 +73,7 @@ for elem in parameter_names:
 
     element_ranges[elem] = (min_val, max_val)
 
-if st.button("Run Optimization"):
+if st.button("Run Optimisation"):
 
     target_vector = df.loc[target_alloy].values
     candidate_alloys = [a for a in df.index if a not in fixed_alloys and a != target_alloy]
@@ -183,7 +183,7 @@ if st.button("Run Optimization"):
 
 
             st.success("Constrained optimization successful!")
-            st.subheader(f"Final Alloy Composition for {target_alloy}")
+            st.subheader(f"Final Alloy Mixing Ratio for {target_alloy}")
             for a, w in zip(final_alloys, final_weights):
                 st.write(f"**{a}**: {w:.4f}")
             st.subheader("📊 Detailed Parameter Composition")
