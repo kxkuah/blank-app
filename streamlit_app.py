@@ -27,6 +27,52 @@ target_alloy = st.selectbox("Select Target Alloy", df.index)
 fixed_alloys = st.multiselect("Select Fixed Alloys", [a for a in df.index if a != target_alloy])
 n_additional = st.number_input("Number of Additional Contributing Alloys", min_value=1, max_value=10, value=2, step=1)
 
+# Default ranges for elements
+default_ranges = {
+    'Si': (0, 15),
+    'Fe': (0, 5),
+    'Cu': (0, 5),
+    'Mn': (0, 5),
+    'Mg': (0, 5),
+    'Cr': (0, 5),
+    'Zn': (0, 5),
+    'V': (0, 5),
+    'Ti': (0, 5),
+    'Bi': (0, 5),
+    'Ga': (0, 5),
+    'Pb': (0, 5),
+    'Zr': (0, 5),
+    'Al': (0, 100)
+}
+
+st.sidebar.subheader("Element Range Constraints")
+
+# Editable UI for each element
+element_ranges = {}
+for elem in parameter_names:
+    default_min, default_max = default_ranges.get(elem, (0.0, 100.0))
+    col1, col2 = st.sidebar.columns(2)
+
+    min_val = float(col1.number_input(
+        f"{elem} min",
+        min_value=0.0,
+        max_value=100.0,
+        value=float(default_min),
+        step=0.01,
+        key=f"{elem}_min"
+    ))
+
+    max_val = float(col2.number_input(
+        f"{elem} max",
+        min_value=min_val,
+        max_value=100.0,
+        value=float(default_max),
+        step=0.01,
+        key=f"{elem}_max"
+    ))
+
+    element_ranges[elem] = (min_val, max_val)
+
 if st.button("Run Optimization"):
 
     target_vector = df.loc[target_alloy].values
@@ -57,7 +103,6 @@ if st.button("Run Optimization"):
         sorted_indices = np.argsort(candidate_weights)[::-1]
         sorted_candidates = [candidate_alloys[i] for i in sorted_indices]
 
-        # Step 2: Iterative selection
         selected_alloys = []
         i = 0
         while len(selected_alloys) < n_additional and i < len(sorted_candidates):
@@ -76,12 +121,24 @@ if st.button("Run Optimization"):
                 selected_alloys.append(sorted_candidates[i])
             i += 1
 
-        # Final optimization
         final_alloys = fixed_alloys + selected_alloys
         X_final = df.loc[final_alloys].values.T
         x0_final = np.ones(len(final_alloys)) / len(final_alloys)
         bounds_final = [(0, 1)] * len(final_alloys)
-        constraints_final = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+
+        constraints_final = [{'type': 'eq', 'fun': lambda w: np.sum(w) - 1}]
+
+        def element_constraint_lower(w, idx, lb):
+            return X_final[idx, :] @ w - lb
+
+        def element_constraint_upper(w, idx, ub):
+            return ub - X_final[idx, :] @ w
+
+        for i, elem in enumerate(parameter_names):
+            if elem in element_ranges:
+                lb, ub = element_ranges[elem]
+                constraints_final.append({'type': 'ineq', 'fun': lambda w, i=i, lb=lb: element_constraint_lower(w, i, lb)})
+                constraints_final.append({'type': 'ineq', 'fun': lambda w, i=i, ub=ub: element_constraint_upper(w, i, ub)})
 
         def loss_final(w):
             return np.linalg.norm(X_final @ w - target_vector)
@@ -92,12 +149,12 @@ if st.button("Run Optimization"):
             final_weights = result_final.x
             combined_vector = X_final @ final_weights
 
-            st.success("Optimization successful!")
+            st.success("Constrained optimization successful!")
             st.subheader(f"Final Alloy Composition for {target_alloy}")
             for a, w in zip(final_alloys, final_weights):
                 st.write(f"**{a}**: {w:.4f}")
 
-            # Plot
+            # Plotting (same as before)
             actual = target_vector
             calculated = combined_vector
             delta = np.abs(actual - calculated)
@@ -114,7 +171,7 @@ if st.button("Run Optimization"):
             indices = np.arange(len(params_filtered))
 
             ax.bar(indices, actual_filtered, bar_width, label='Actual', color='skyblue')
-            ax.bar(indices + bar_width, calculated_filtered, bar_width, label='Calculated', color='lightcoral')
+            ax.bar(indices + bar_width, calculated_filtered, bar_width, label='Calculated (Constrained)', color='lightcoral')
             max_val = max(max(actual_filtered), max(calculated_filtered))
             ax.set_ylim(0, max_val * 1.15)
 
@@ -126,9 +183,8 @@ if st.button("Run Optimization"):
             ax.set_xticks(indices + bar_width / 2)
             ax.set_xticklabels(params_filtered, rotation=45)
             ax.set_ylabel('Parameter Value')
-            ax.set_title(f'Actual vs Calculated for {target_alloy} using {", ".join(final_alloys)}')
+            ax.set_title(f'Actual vs Constrained Calculated for {target_alloy} using {", ".join(final_alloys)}')
             ax.legend()
             st.pyplot(fig)
-
         else:
-            st.error("Final optimization failed.")
+            st.error("Final optimization with element constraints failed.")
