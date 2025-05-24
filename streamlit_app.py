@@ -153,6 +153,27 @@ if st.button("Run Optimization"):
             st.subheader(f"Final Alloy Composition for {target_alloy}")
             for a, w in zip(final_alloys, final_weights):
                 st.write(f"**{a}**: {w:.4f}")
+            st.subheader("📊 Detailed Parameter Composition")
+
+            detailed_lines = []
+
+            for i, param in enumerate(parameter_names):
+                parts = []
+                total = 0.0
+
+                for alloy, weight in zip(final_alloys, final_weights):
+                    value = df.loc[alloy, param]
+                    contrib = weight * value
+                    parts.append(f"{weight:.4f} × {value:.2f} = {contrib:.2f}")
+                    total += contrib
+
+                breakdown = " + ".join(parts)
+                line = f"**{param}**: {breakdown} = **{total:.2f}**"
+                detailed_lines.append(line)
+
+            # Display the full breakdown
+            for line in detailed_lines:
+                st.markdown(line)
 
             # Plotting (same as before)
             actual = target_vector
