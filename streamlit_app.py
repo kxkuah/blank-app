@@ -25,7 +25,7 @@ df, parameter_names = load_data()
 
 target_alloy = st.selectbox("Select Target Alloy", df.index)
 fixed_alloys = st.multiselect("Select Fixed Alloys", [a for a in df.index if a != target_alloy])
-n_additional = st.number_input("Max Number of Additional Contributing Alloys", min_value=0, max_value=1, value=0, step=1)
+n_additional = st.number_input("Max Number of Additional Contributing Alloys", min_value=0, max_value=5, value=0, step=1)
 
 # Default ranges for elements
 default_ranges = {
