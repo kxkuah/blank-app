@@ -197,7 +197,7 @@ if st.button("Run Optimisation"):
                 for alloy, weight in zip(final_alloys, final_weights):
                     value = df.loc[alloy, param]
                     contrib = weight * value
-                    parts.append(f"{weight:.4f} × {value:.2f} = {contrib:.2f}")
+                    parts.append(f"( {weight:.4f} × {value:.2f} = {contrib:.2f} )")
                     total += contrib
 
                 breakdown = " + ".join(parts)
